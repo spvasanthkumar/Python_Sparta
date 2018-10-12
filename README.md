@@ -1,1 +1,109 @@
-Python program to read data from Mongodb and save it in DataFrame
+#Python program to read data from Mongodb and save it in DataFrame
+
+import xlrd
+
+workbook = xlrd.open_workbook("Desktop/test.xlsx","rb")
+sheet = workbook.sheet_by_index(0)
+rows = []
+for i in range(sheet.nrows):
+    columns = []
+    for j in range(sheet.ncols):
+        columns.append(sheet.cell(i, j).value)
+    rows.append(columns)
+db_type=rows[1][1]
+usr_id=rows[2][1]
+pswd=rows[3][1]
+host=rows[4][1]
+port=int(rows[5][1])
+db_nme=rows[6][1]
+#print(db_type,usr_id,Pswd,host,port,db_nme)
+
+sheet1 = workbook.sheet_by_index(1)
+rows = []
+for i in range(sheet1.nrows):
+    columns = []
+    for j in range(sheet1.ncols):
+        columns.append(sheet1.cell(i, j).value)
+    rows.append(columns)
+tgt_query=rows[1][4]    
+#print(query)
+    
+    
+def flatten_json(y):
+    out = {}
+
+    def flatten(x, name=''):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + '_')
+        elif type(x) is list:
+            i = 0
+            for a in x:
+                flatten(a, name + str(i) + '_')
+                i += 1
+        else:
+            out[name[:-1]] = x
+
+    flatten(y)
+    return out
+
+import pymongo
+from pymongo import MongoClient
+import pandas as pd
+from pandas.io.json import json_normalize 
+from flatten_json import flatten
+
+#client = MongoClient('mongodb://admin:Password1@localhost:27017/test')
+
+conn_str= db_type +'://'+ usr_id + ':'  + pswd +'@'+ host + ':' + str(port) +'/' +db_nme
+#print(conn_str)
+
+client = MongoClient(conn_str)
+
+database='db = client.'+db_nme
+exec(database)
+
+
+workbook = xlrd.open_workbook("Desktop/test.xlsx","rb")
+ 
+input_sheet_val = workbook.sheet_by_index(1)
+ 
+rows = []
+ 
+for i in range(input_sheet_val.nrows):
+    columns = []
+    for j in range(input_sheet_val.ncols):
+        columns.append(input_sheet_val.cell(i, j).value)
+    rows.append(columns)
+    
+k=1
+ 
+
+
+while k < len(rows):
+    #print(rows[k][5])
+ 
+    x = []
+ 
+#tgt_query = input_sheet['F2'].value
+ 
+    tgt_query = str(rows[k][5])
+ 
+    print(tgt_query)
+ 
+    tgt_query = 'cur='+tgt_query
+    exec(tgt_query)
+     
+#cur = db.restaurants.find({},{ "_id":0,"name" : 1, "restaurant_id" : 1, "grades" : 1, "cuisine" : 1, "borough" : 1, "address" : 1})
+ 
+    for i in cur:
+        x.append(flatten_json(i)) 
+ 
+ 
+        tgt_df = pd.DataFrame(x)
+ 
+ 
+        print(tgt_df)
+        tgt_df.head()
+    k+=1
+
